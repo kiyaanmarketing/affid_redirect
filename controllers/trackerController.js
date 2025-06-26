@@ -1,51 +1,36 @@
-const { PutCommand, ScanCommand, DeleteCommand, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
-const dynamoDb = require("./aws-config");
+
+const {  connectDB, getDB } = require('./mongo-config');
 
 const TABLE_NAME = 'Tracker';
 
-// Get Tracked All Data
-const getAllHostName = async (TableName) => {
-    try {
-      const params = {
-        TableName: TableName
-      };
-      const result = await dynamoDb.send(new ScanCommand(params));
-      return result.Items;
-    } catch (err) {
-      console.error('Error retrieving tracking All data:', err);
-      //res.status(500).json({ error: 'Error retrieving tracking All data' });
-    }
-  };
-  
-// Fetch All Records
-// const getAllHostName = async () => {
-//   const result = await dynamoDb.send(new ScanCommand({ TableName: TABLE_NAME }));
-//   return result.Items;
-// };
 
-  console.log("getAllHostName",getAllHostName('Tracker').then((result) => console.log("prom result=> ",result)))
+const getAllHostName = async (collectionName) => {
+  const db = getDB();
   
+  try {
+    return await db.collection(collectionName).find({}).toArray();
+  } catch (err) {
+    console.error('MongoDB Error:', err);
+    return [];
+  }
+};
 
-const getAffiliateUrlByHostNameFind = async (hostname,TableName) => {
-    try {
-      // Fetch all hostnames and affiliate URLs from DynamoDB
-      const allHostNames = await getAllHostName(TableName);
-      
-      // Find the entry where the hostname matches
-      const matchedEntry = allHostNames.find((item) => item.hostname === hostname);
-      console.log("matchedEntry => ",matchedEntry)
-      if (matchedEntry) {
-        // If a match is found, return the corresponding affiliateUrl
-        return matchedEntry.affiliateUrl;
-      } else {
-        // If no match is found, return a default affiliate URL
-        return ' ';
-      }
-    } catch (error) { 
-      console.error('Error finding affiliate URL:', error);
-      return ' '; // Return default on error
-    }
-  };
+
+const getAffiliateUrlByHostNameFind = async (hostname, collectionName) => {
+  const db = getDB();
+  
+  try {
+    const result = await db.collection(collectionName)
+                          .findOne({ hostname: hostname });
+    return result ? result.affiliateUrl : '';
+  } catch (error) {
+    console.error('MongoDB Error:', error);
+    return '';
+  }
+};
+
+
+
   
   // Controller for handling tracker redirects
   const handleTrackerRedirect = async (req, res) => {
@@ -66,16 +51,18 @@ const getAffiliateUrlByHostNameFind = async (hostname,TableName) => {
   
 
 
-// Add or Update Record
+
 const addOrUpdateTracker = async (req, res) => {
   const { hostname, affiliateUrl } = req.body;
   if (!hostname || !affiliateUrl) return res.status(400).json({ message: "hostname and affiliateUrl are required" });
 
   try {
-    await dynamoDb.send(new PutCommand({
-      TableName: TABLE_NAME,
-      Item: { hostname, affiliateUrl }
-    }));
+    const db = getDB();
+    await db.collection('Tracker').updateOne(
+      { hostname },
+      { $set: { hostname, affiliateUrl } },
+      { upsert: true }
+    );
     res.status(200).json({ message: "Saved successfully" });
   } catch (err) {
     console.error("Error saving tracker:", err);
@@ -83,20 +70,20 @@ const addOrUpdateTracker = async (req, res) => {
   }
 };
 
+
 // Delete Record
 const deleteTracker = async (req, res) => {
   const { hostname } = req.params;
   try {
-    await dynamoDb.send(new DeleteCommand({
-      TableName: TABLE_NAME,
-      Key: { hostname }
-    }));
+    const db = getDB();
+    await db.collection('Tracker').deleteOne({ hostname });
     res.status(200).json({ message: "Deleted successfully" });
   } catch (err) {
     console.error("Error deleting tracker:", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 // Get All
 const getAllTrackers = async (req, res) => {
@@ -117,26 +104,27 @@ const updateTracker = async (req, res) => {
   }
 
   try {
-    // Delete old record if hostname changed
+    const db = getDB();
+
     if (oldHostname !== hostname) {
-      await dynamoDb.send(new DeleteCommand({
-        TableName: 'Tracker',
-        Key: { hostname: oldHostname }
-      }));
+      // Delete old document
+      await db.collection('Tracker').deleteOne({ hostname: oldHostname });
     }
 
-    // Add updated/new record
-    await dynamoDb.send(new PutCommand({
-      TableName: 'Tracker',
-      Item: { hostname, affiliateUrl }
-    }));
+    // Insert or update new document
+    await db.collection('Tracker').updateOne(
+      { hostname },
+      { $set: { hostname, affiliateUrl } },
+      { upsert: true }
+    );
 
     res.status(200).json({ message: "Updated successfully" });
   } catch (err) {
-    console.error("Error updating item:", err);
+    console.error("Error updating tracker:", err);
     res.status(500).json({ message: "Update failed" });
   }
 };
+
 
 
 

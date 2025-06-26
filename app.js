@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const trackerRoutes = require('./routes/trackerRoutes');
+const { connectDB } = require('./controllers/mongo-config');
+
 const cors = require('cors');
 const app = express();
 app.use(cors());
@@ -23,7 +25,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
 });
+
+
 
