@@ -33,22 +33,52 @@ const getAffiliateUrlByHostNameFind = async (hostname, collectionName) => {
 
   
   // Controller for handling tracker redirects
-  const handleTrackerRedirect = async (req, res) => {
-    const trackerId = req.params.trackerId;
-    try {
-        const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId,'Tracker');
-      //const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId, 'Tracker');
-      if (!redirectUrl) {
-        return res.status(404).send('URL not found for the specified tracker');
-      }
-      res.set('Referrer-Policy', 'no-referrer');
-      res.redirect(302, redirectUrl);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      res.status(500).send('Internal Server Error');
-    }
-  };
+  // const handleTrackerRedirect = async (req, res) => {
+  //   const trackerId = req.params.trackerId;
+  //   try {
+  //       const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId,'Tracker');
+  //     //const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId, 'Tracker');
+  //     if (!redirectUrl) {
+  //       return res.status(404).send('URL not found for the specified tracker');
+  //     }
+  //     res.set('Referrer-Policy', 'no-referrer');
+  //     res.redirect(302, redirectUrl);
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //     res.status(500).send('Internal Server Error');
+  //   }
+  // };
   
+
+// Controller for handling tracker redirects
+const handleTrackerRedirect = async (req, res) => {
+  const trackerId = req.params.trackerId;
+
+  try {
+    // 🔍 Check if request has a referrer
+    const referrer = req.get('referer');
+
+    if (!referrer || referrer.trim() === "") {
+      console.log(`Blocked redirect — referrer missing for trackerId: ${trackerId}`);
+      return res.status(403).send('Access denied: missing referrer');
+    }
+
+    const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId, 'Tracker');
+
+    if (!redirectUrl) {
+      return res.status(404).send('URL not found for the specified tracker');
+    }
+
+    res.set('Referrer-Policy', 'no-referrer');
+    res.redirect(302, redirectUrl);
+
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+
 
 
 
