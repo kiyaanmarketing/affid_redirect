@@ -33,76 +33,76 @@ const getAffiliateUrlByHostNameFind = async (hostname, collectionName) => {
 
   
   // Controller for handling tracker redirects
-  // const handleTrackerRedirect = async (req, res) => {
-  //   const trackerId = req.params.trackerId;
-  //   try {
-  //       const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId,'Tracker');
-  //     //const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId, 'Tracker');
-  //     if (!redirectUrl) {
-  //       return res.status(404).send('URL not found for the specified tracker');
-  //     }
-  //     res.set('Referrer-Policy', 'no-referrer');
-  //     res.redirect(302, redirectUrl);
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //     res.status(500).send('Internal Server Error');
-  //   }
-  // };
+  const handleTrackerRedirect = async (req, res) => {
+    const trackerId = req.params.trackerId;
+    try {
+        const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId,'Tracker');
+      //const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId, 'Tracker');
+      if (!redirectUrl) {
+        return res.status(404).send('URL not found for the specified tracker');
+      }
+      res.set('Referrer-Policy', 'no-referrer');
+      res.redirect(302, redirectUrl);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      res.status(500).send('Internal Server Error');
+    }
+  };
   
 // Controller for handling tracker redirects (HTML relay version)
-const handleTrackerRedirect = async (req, res) => {
-  const trackerId = req.params.trackerId;
+// const handleTrackerRedirect = async (req, res) => {
+//   const trackerId = req.params.trackerId;
 
-  try {
-    const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId, 'Tracker');
+//   try {
+//     const redirectUrl = await getAffiliateUrlByHostNameFind(trackerId, 'Tracker');
 
-    if (!redirectUrl) {
-      return res.status(404).send('URL not found for the specified tracker');
-    }
+//     if (!redirectUrl) {
+//       return res.status(404).send('URL not found for the specified tracker');
+//     }
 
-    // Strong no-referrer headers
-    res.setHeader('Referrer-Policy', 'no-referrer');
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+//     // Strong no-referrer headers
+//     res.setHeader('Referrer-Policy', 'no-referrer');
+//     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+//     res.setHeader('Pragma', 'no-cache');
+//     res.setHeader('Expires', '0');
 
-    // HTML relay response
-    res.status(200).send(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Cache-Control" content="no-store" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <title>Redirecting...</title>
-</head>
-<body>
-  <noscript>
-    <meta http-equiv="refresh" content="0;url=${redirectUrl}">
-  </noscript>
+//     // HTML relay response
+//     res.status(200).send(`
+// <!DOCTYPE html>
+// <html lang="en">
+// <head>
+//   <meta charset="utf-8">
+//   <meta name="referrer" content="no-referrer">
+//   <meta http-equiv="Cache-Control" content="no-store" />
+//   <meta http-equiv="Pragma" content="no-cache" />
+//   <title>Redirecting...</title>
+// </head>
+// <body>
+//   <noscript>
+//     <meta http-equiv="refresh" content="0;url=${redirectUrl}">
+//   </noscript>
 
-  <script>
-    (function () {
-      try {
-        // small delay = more natural navigation
-        setTimeout(function () {
-          window.location.replace("${redirectUrl}");
-        }, 300);
-      } catch (e) {
-        window.location.href = "${redirectUrl}";
-      }
-    })();
-  </script>
-</body>
-</html>
-    `);
+//   <script>
+//     (function () {
+//       try {
+//         // small delay = more natural navigation
+//         setTimeout(function () {
+//           window.location.replace("${redirectUrl}");
+//         }, 300);
+//       } catch (e) {
+//         window.location.href = "${redirectUrl}";
+//       }
+//     })();
+//   </script>
+// </body>
+// </html>
+//     `);
 
-  } catch (error) {
-    console.error('Tracker redirect error:', error);
-    res.status(500).send('Internal Server Error');
-  }
-};
+//   } catch (error) {
+//     console.error('Tracker redirect error:', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// };
 
 
 
